@@ -1,12 +1,13 @@
-from .. import kron,SX,SZ,SY,ID
+from .. import kron,SX,SZ,SY,ID,check_dense_lmax
 import functools
 import numpy as np
 @functools.lru_cache(None)
 def dense_me(L,i):
     '''
         Dense representation of the even Majorana operator at site $i$ in a
-        system with size $L$. The convention is $\\hat{\\gamma}_{2i} =
-        \\hat{c}_i+\\hat{c}^\\dagger_i$. This function is lru_cached.
+        system with size $L$. The convention is $\\hat{\\gamma}_{2i}
+        =\\frac{1}{\\sqrt{2}}( \\hat{c}_i+\\hat{c}^\\dagger_i)$. This function
+        is lru_cached.
     '''
     return dense_me_uncached(L,i)
 
@@ -16,7 +17,7 @@ def dense_me_uncached(L,i):
         Uncached version of dense_me(L,i)
     '''
     check_dense_lmax(L)
-    return kron([SZ]*i+[SX]+[ID]*(L-i-1))
+    return kron([SZ]*i+[SX/np.sqrt(2)]+[ID]*(L-i-1))
 
 def sparse_me(L,i):
     raise NotImplementedError()
@@ -25,7 +26,8 @@ def dense_mo(L,i):
     '''
         Dense representation of the odd Majorana operator at site $i$ in a
         system with size $L$. The convention is $\\hat{\\gamma}_{2i+1} =
-        1j(\\hat{c}^\\dagger_i-\\hat{c}_i)$. This function is lru_cached.
+        \\frac{1j}{\\sqrt{2}}(\\hat{c}^\\dagger_i-\\hat{c}_i)$. This function is
+        lru_cached.
     '''
     return dense_mo_uncached(L,i)
 
@@ -34,21 +36,21 @@ def dense_mo_uncached(L,i):
         Uncached version of dense_mo
     '''
     check_dense_lmax(L)
-    return kron([SZ]*i+[SY]+[ID]*(L-i-1))
+    return kron([SZ]*i+[SY/np.sqrt(2)]+[ID]*(L-i-1))
 
 def sparse_mo(L,i):
     raise NotImplementedError()
 def dense_ma(L,i):
     if i%2==1:
-        return dense_mo(L,i)
+        return dense_mo(L,i//2)
     else:
-        return dense_me(L,i)
+        return dense_me(L,i//2)
 
 def sparse_ma(L,i):
     if i%2==1:
-        return sparse_mo(L,i)
+        return sparse_mo(L,i//2)
     else:
-        return sparse_me(L,i)
+        return sparse_me(L,i//2)
 
 @functools.lru_cache(None)
 def dense_pe(L):

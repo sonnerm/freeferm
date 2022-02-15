@@ -1,9 +1,12 @@
 import numpy as np
+import numpy.linalg as la
 def rot_to_circuit(rot):
     '''
         Decompose a single body rotation matrix into a quantum circuit.
     '''
     raise NotImplementedError()
+def _calculate_gate():
+    pass
 def corr_to_circuit(corr,nbcutoff=1e-10):
     '''
         Find a quantum circuit which transforms the vacuum state into the

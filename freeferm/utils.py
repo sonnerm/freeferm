@@ -41,6 +41,17 @@ def outer(args):
     for a in args[1:]:
         ret=np.outer(a,ret)
     return ret.ravel()
+def block(args):
+    '''
+        Get the block diagonal matrix of a list of matrices. Equivalent to the direct sum in tensor language
+    '''
+    ret=np.zeros((sum(a.shape[0] for a in args),sum(a.shape[1] for a in args)))
+    ci,ri=0,0
+    for a in args:
+        ret[ri:ri+a.shape[0],ci:ci+a.shape[1]]=a
+        ri+=a.shape[0]
+        ci+=a.shape[1]
+    return ret
 def dense_vac(L):
     '''
         Returns a dense vector representing the fermionic vacuum state (i.e. no particle state)
