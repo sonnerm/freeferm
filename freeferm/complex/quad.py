@@ -1,5 +1,6 @@
 import numpy as np
 from .ops import *
+from .. import dense_vac
 def quad_sb_to_dense(quad):
     '''
         Convert the single body matrix representation of a quadratic operator to a dense many-body form
@@ -8,7 +9,7 @@ def quad_sb_to_dense(quad):
     ret=np.zeros((2**L,2**L),dtype=quad.dtype)
     for i in range(L):
         for j in range(L):
-            ret+=quad[i,j]*cd(L,i)@c(L,j)
+            ret+=quad[i,j]*dense_cd(L,i)@dense_c(L,j)
     return ret
 
 def quad_sb_to_sparse(quad):
@@ -30,8 +31,8 @@ def quad_sparse_to_sb(quad):
     '''
     L=int(np.log2(len(quad)))
     ret=np.zeros((L,L),dtype=quad.dtype)
-    vac=vac(L)
-    vacs=[cd(L,i)@vac for i in range(L)]
+    vac=dense_vac(L)
+    vacs=[dense_cd(L,i)@vac for i in range(L)]
     for i in range(L):
         for j in range(L):
             ret[i,j]=vacs[i].conj()@(quad@vacs[j])

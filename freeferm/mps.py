@@ -28,3 +28,5 @@ def mps_to_dense(mps):
 def mpo_to_dense(mpo):
     check_dense_lmax(len(mpo))
     raise NotImplementedError()
+def mps_vac(L):
+    raise NotImplementedError()

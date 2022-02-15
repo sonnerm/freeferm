@@ -27,3 +27,5 @@ def dense_to_corr(dense):
         Calculate the correlation matrix of a dense vector
     '''
     raise NotImplementedError()
+def corr_vac(L):
+    return np.diag(([1.0j,0]*L)[:-1],1)+np.diag(([-1.0j,0]*L)[:-1],-1)

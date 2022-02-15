@@ -1,4 +1,4 @@
-from .. import kron,SX,SZ,SY,ID,check_dense_lmax,check_sparse_lmax
+from .. import kron,SX,SZ,SY,ID,Sp,Sm,check_dense_lmax,check_sparse_lmax
 import functools
 import numpy as np
 @functools.lru_cache(None)
