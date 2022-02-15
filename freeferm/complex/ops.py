@@ -1,38 +1,63 @@
-from .. import kron,SX,SZ,SY,ID,check_lmax
+from .. import kron,SX,SZ,SY,ID,check_dense_lmax,check_sparse_lmax
 import functools
 import numpy as np
 @functools.lru_cache(None)
-def c(L,i):
+def dense_c(L,i):
     '''
         Dense $2^L\\times 2^L$ matrix representing the lowering (annihilation)
         operator for the fermion at site $i$ in a system of size $L$ commonly
-        written as $\\hat{c}_i$.
+        written as $\\hat{c}_i$. This function is lru_cached
     '''
-    check_lmax(L)
+    return dense_c_uncached(L,i)
+def dense_c_uncached(L,i):
+    '''
+        Uncached version of dense_c
+    '''
+    check_dense_lmax(L)
     return kron([SZ]*i+[Sm]+[ID]*(L-i-1))
+def sparse_c(L,i):
+    raise NotImplementedError()
+
 @functools.lru_cache(None)
-def cd(L,i):
+def dense_cd(L,i):
     '''
         Dense $2^L\\times 2^L$ matrix representing the raising (creation)
         operator for the fermion at site $i$ in a system of size $L$ commonly
         written as $\\hat{c}^\\dagger_i$.
     '''
-    check_lmax(L)
+    return dense_cd_uncached(L,i)
+def dense_cd_uncached(L,i):
+    '''
+        Uncached version of dense_cd
+    '''
+    check_dense_lmax(L)
     return kron([SZ]*i+[Sp]+[ID]*(L-i-1))
+
+def sparse_cd(L,i):
+    raise NotImplementedError()
+
 @functools.lru_cache(None)
-def pn(L,n):
+def dense_pn(L,n):
     '''
         Projection on the sector with particle number $n$. Commutes with any
         quadratic operator of complex fermions.
     '''
-    check_lmax(L)
-    pass
+    return dense_pn_uncached(L,n)
+def dense_pn_uncached(L,n):
+    '''
+        Uncached version of dense_pn
+    '''
+    check_dense_lmax(L)
+    raise NotImplementedError()
+def sparse_pn(L,n):
+    raise NotImplementedError()
+
+
 @functools.lru_cache(None)
-def n(L):
-    pass
-@functools.lru_cache(None)
-def vac(L):
-    check_lmax(L)
-    ret=np.zeros((2**L,))
-    ret[0]=1
-    return ret
+def dense_n(L):
+    return dense_n_uncached(L)
+def dense_n_uncached(L):
+    check_dense_lmax(L)
+    raise NotImplementedError()
+def sparse_n(L):
+    raise NotImplementedError()
