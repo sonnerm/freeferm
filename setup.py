@@ -8,4 +8,5 @@ setup(
     author="Michael Sonner",
     author_email="sonnerm@gmail.com",
     description="Toolkit for performing numerical calculations involving free fermion models",
+    extras_require={"sparse linalg":["scipy"]},
 )
