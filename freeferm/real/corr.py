@@ -1,7 +1,8 @@
 import numpy as np
 import numpy.linalg as la
 from .. import check_sparse_lmax
-from .quad import quad_sb_to_sparse
+from .quad import quad_sb_to_sparse,quad_sb_to_dense
+from .ops import dense_ma
 def corr_to_dense(corr,sparse=False):
     '''
         Find the dense vector corresponding to the Gaussian state with correlation matrix corr.
@@ -34,9 +35,10 @@ def dense_to_corr(dense):
     '''
     L=int(np.log2(dense.shape[0]))
     corr=np.zeros((2*L,2*L),dtype=complex)
+    phio=[dense_ma(L,i)@dense for i in range(2*L)]
     for i in range(2*L):
         for j in range(2*L):
-            corr[i,j]=dense.conj()@(ma(L,i)@(ma(L,j)@dense))
+            corr[i,j]=phio[i].conj()@phio[j]
     return corr-np.eye(2*L) #our convention for the correlation matrix
 def corr_vac(L):
     return np.diag(([1.0j,0]*L)[:-1],1)+np.diag(([-1.0j,0]*L)[:-1],-1)

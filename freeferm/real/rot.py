@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.linalg as la
 from .ops import dense_ma
 def rot_dense_to_sb(rot):
     L=int(np.log2(rot.shape[0]))

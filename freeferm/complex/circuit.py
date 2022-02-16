@@ -5,8 +5,8 @@ def rot_to_circuit(rot):
         Decompose a single body rotation matrix into a quantum circuit.
     '''
     raise NotImplementedError()
-def _calculate_gate():
-    pass
+def _find_sb_gate(target):
+    raise NotImplementedError()
 def corr_to_circuit(corr,nbcutoff=1e-10):
     '''
         Find a quantum circuit which transforms the vacuum state into the
@@ -30,7 +30,7 @@ def corr_to_circuit(corr,nbcutoff=1e-10):
                 target=evv[:,-1]
                 break
         for i in range(b-2,-1,-1):
-            vs.append((i+l,target[i],target[i+1]))
+            vs.append((i+l,_find_sb_gate(target[i:i+2])))
             target=single_body_rotation(b,i,vs[-1][1],vs[-1][2]).T.conj()@target
             rot=single_body_rotation(L,vs[-1][0],vs[-1][1],vs[-1][2])
             ccorr=rot.T.conj()@ccorr@rot
