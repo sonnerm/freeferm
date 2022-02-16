@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.linalg as la
 SX=np.array([[0,1],[1,0]])
 SY=np.array([[0,-1.0j],[1.0j,0]])
 SZ=np.array([[1,0],[0,-1]])
@@ -52,6 +53,12 @@ def block(args):
         ri+=a.shape[0]
         ci+=a.shape[1]
     return ret
+def stack(args):
+    '''
+        Stack vectors on top of each other, equivalent to a direct sum in tensor language, see block for comparison
+    '''
+    return np.hstack(args)
+
 def dense_vac(L):
     '''
         Returns a dense vector representing the fermionic vacuum state (i.e. no particle state)
@@ -60,3 +67,19 @@ def dense_vac(L):
     ret=np.zeros((2**L,))
     ret[-1]=1
     return ret
+def dense_full(L):
+    '''
+        Returns a dense vector representing the fully occupied state
+    '''
+    check_sparse_lmax(L)
+    ret=np.zeros((2**L,))
+    ret[0]=1
+    return ret
+
+def eigu(mat):
+    '''
+        Compute the eigenvalues and eigenvectors of a dense unitary matrix using
+        the hermitian numpy.linalg.eigh instead of the generic numpy.linalg.eig
+    '''
+    _,evv=la.eigh(mat+mat.T.conj())
+    return np.einsum("ba,bc,ca->a",evv.conj(),mat,evv),evv
