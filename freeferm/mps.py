@@ -46,11 +46,11 @@ def dense_to_mps(dense):
 def dense_to_mps_slice(dense):
     mps=[]
     L=int(np.log2(dense.shape[1]))
-    cdense=dense
+    cdense=dense.reshape(dense.shape[0],dense.shape[1]*dense.shape[2])
     for i in range(L):
-        cdense=cdense.reshape((cdense.shape[0]*2,(cdense.shape[1]*cdense.shape[2])//2))
+        cdense=cdense.reshape((cdense.shape[0]*2,(cdense.shape[1])//2))
         q,r=la.qr(cdense)
-        mps.append(q)
+        mps.append(q.reshape((q.shape[0]//2,2,q.shape[1])))
         cdense=r
     mps[-1]*=r
     return mps
@@ -68,4 +68,7 @@ def dense_to_mpo(dense):
 def dense_to_mpo_slice(dense):
     raise NotImplementedError()
 def mps_vac(L):
-    return [np.array([[[0,1]]])]*L
+    return [np.array([0,1]).reshape((1,2,1))]*L
+
+def mps_full(L):
+    return [np.array([1,0]).reshape((1,2,1))]*L

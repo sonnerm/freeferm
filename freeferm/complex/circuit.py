@@ -11,7 +11,9 @@ def corr_to_circuit(corr,nbcutoff=1e-10):
     '''
         Find a quantum circuit which transforms the vacuum state into the
         gaussian state with correlation matrix corr using the algorithm
-        described by Fishman and White Phys. Rev. B 92, 075132.
+        described by Fishman and White Phys. Rev. B 92, 075132. Quantum circuits
+        are list of the form (index, many body gate, Jordan-Wigner string
+        necessary?, single body gate).
     '''
     ccorr=np.copy(corr)
     L=ccorr.shape[0]

@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.linalg as la
 from .ops import dense_ma
+from .. import eigu
 def rot_dense_to_sb(rot):
     L=int(np.log2(rot.shape[0]))
     ret=np.zeros((2*L,2*L))
@@ -10,7 +11,12 @@ def rot_dense_to_sb(rot):
     return ret
 
 def rot_sb_to_dense(rot):
-    raise NotImplementedError()
+    check_dense_lmax(rot.shape[0]//2)
+    ev,evv=eigu(rot)
+    eva=np.angle(ev) #equivalent to logarithgm
+    evm,evvm=la.eigh(quad_sb_to_dense(evv.T.conj()@eva@evv))
+    return evm@evvm
+
 
 def rot_sb_to_sparse(rot):
     raise NotImplementedError()
