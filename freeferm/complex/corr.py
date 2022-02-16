@@ -15,10 +15,7 @@ def corr_to_mps(corr,nbcutoff=1e-10,chi=None,svd_cutoff=None):
     '''
     L=corr.shape[0]//2
     circ=corr_to_circuit(corr,nbcutoff)
-    if chi is None and svd_cutoff is None:
-        return circuit_to_mps_uncompressed(mps_vac(L),circ)
-    else:
-        return circuit_to_mps_svd(mps_vac(L),circ,chi,svd_cutoff)
+    return circuit_to_mps(mps_vac(L),circ,chi,svd_cutoff)
 
 def mps_to_corr(mps):
     '''
