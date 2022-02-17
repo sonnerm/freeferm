@@ -1,12 +1,24 @@
 import numpy as np
 import numpy.linalg as la
-def rot_to_circuit(rot):
+def rot_sb_to_circuit(rot):
     '''
         Decompose a single body rotation matrix into a quantum circuit.
     '''
     raise NotImplementedError()
+
+def rot_circuit_to_sb(rot):
+    ret=np.eye(L)
+    for i,_,_,c in circ:
+        ret=block([np.eye(2**i),c,np.eye(2**(L-i)//c.shape[0])])@ret
+    return ret
 def _find_sb_gate(target):
-    raise NotImplementedError()
+    mat=np.zeros((4,4),dtype=complex)
+    mat[0]=target
+    mat[0]=mat[0]/np.sqrt(mat[0]@mat[0])
+    mat[1,0]=mat[0,1]
+    mat[1,1]=-mat[0,0]
+    return mat
+
 def corr_to_circuit(corr,nbcutoff=1e-10):
     '''
         Find a quantum circuit which transforms the vacuum state into the

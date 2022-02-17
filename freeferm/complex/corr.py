@@ -36,3 +36,6 @@ def dense_to_corr(dense):
 
 def corr_vac(L):
     return np.zeros((L,L))
+
+def corr_full(L):
+    return np.eye(L)

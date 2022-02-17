@@ -1,11 +1,18 @@
 import numpy as np
 from .. import block
 from .rot import rot_sb_to_dense
-def rot_to_circuit(rot):
+def rot_sb_to_circuit(rot):
     '''
         Decompose a single body rotation matrix into a quantum circuit.
     '''
     raise NotImplementedError()
+
+def rot_circuit_to_sb(L,circ):
+    ret=np.eye(2*L)
+    for i,_,_,c in circ:
+        ret=block([np.eye(2**(2*i)),c,np.eye(2**(2*L-2*i)//c.shape[0])])@ret
+    return ret
+
 def _find_sb_gate(target):
     #start with a random matrix, set first row to target.real, second to target.imag
     #run Gram schmidt
@@ -46,4 +53,4 @@ def corr_to_circuit(corr,nbcutoff=1e-10):
             if i==2*L-4:
                 vs[k]=(i,np.diag([1,1,1,-1])@r)
                 break
-    return [(v[0],rot_sb_to_dense(v[1])) for v in vs]
+    return [(v[0],rot_sb_to_dense(v[1]),True if la.det(v[1])<0 else False,v[1]) for v in vs]

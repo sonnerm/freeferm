@@ -12,17 +12,14 @@ def corr_to_dense(corr,sparse=False):
         import scipy.sparse.linalg as sla
         sla.eigsh(quad_sb_to_sparse(corr),k=1,which="SA")[1][:,0]
     else:
-        return la.eigh(quad_sb_to_dense(corr))[1][:,0] #for now maybe later change algo to fishman
+        return la.eigh(quad_sb_to_dense(corr))[1][:,0]
 def corr_to_mps(corr,nbcutoff=1e-10,chi=None,svd_cutoff=None):
     '''
         Find an MPS
     '''
     L=corr.shape[0]//2
     circ=corr_to_circuit(corr,nbcutoff)
-    if chi is None and svd_cutoff is None:
-        return circuit_to_mps_uncompressed(mps_vac(L),circ)
-    else:
-        return circuit_to_mps_svd(mps_vac(L),circ,chi,svd_cutoff)
+    return circuit_to_mps(mps_vac(L),circ,chi,svd_cutoff)
 
 def mps_to_corr(mps):
     '''
@@ -42,3 +39,6 @@ def dense_to_corr(dense):
     return corr-np.eye(2*L) #our convention for the correlation matrix
 def corr_vac(L):
     return np.diag(([1.0j,0]*L)[:-1],1)+np.diag(([-1.0j,0]*L)[:-1],-1)
+
+def corr_full(L):
+    return np.diag(([-1.0j,0]*L)[:-1],1)+np.diag(([1.0j,0]*L)[:-1],-1)
