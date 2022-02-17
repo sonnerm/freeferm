@@ -1,4 +1,7 @@
-from freeferm.complex import quad_sb_to_dense,quad_dense_to_sb,quad_sb_to_sparse,quad_sparse_to_sb
+from freeferm.complex import quad_sb_to_dense,quad_dense_to_sb
+from freeferm.complex import quad_sb_to_sparse,quad_sparse_to_sb
+from freeferm.complex import quad_sb_to_mpo
+from freeferm import mpo_to_dense
 import numpy.linalg as la
 import numpy as np
 import pytest
@@ -18,6 +21,7 @@ def test_quad_sb_dense_hermitian(seed_rng):
         comev2[i]=sum([modes[k] if s=="1" else 0 for k,s in enumerate(bin(i+2**L)[3:])])
     assert np.sort(comev)==pytest.approx(np.sort(comev2))
 
+@pytest.mark.xfail(reason="Sparse is not implemented yet")
 def test_quad_sb_sparse_hermitian(seed_rng):
     L=4
     ham_sb=np.random.random(size=(L,L))+1.0j*np.random.random(size=(L,L))
@@ -26,6 +30,14 @@ def test_quad_sb_sparse_hermitian(seed_rng):
     assert ham_sb==pytest.approx(quad_sparse_to_sb(ham_sparse))
     ham_dense=quad_sb_to_dense(ham_sb)
     assert ham_sparse@np.eye(2**L)==pytest.approx(ham_dense)
+
+@pytest.mark.xfail(reason="quad_sb_to_mpo not implemented yet")
+def test_quad_sb_mpo_generic(seed_rng):
+    L=4
+    ham_sb=np.random.random(size=(L,L))+1.0j*np.random.random(size=(L,L))
+    ham_mpo=quad_sb_to_mpo(ham_sb)
+    ham_dense=quad_sb_to_dense(ham_sb)
+    assert mpo_to_dense(ham_mpo)==pytest.approx(ham_dense)
 
 def test_quad_sb_dense_generic(seed_rng):
     L=4
@@ -40,6 +52,7 @@ def test_quad_sb_dense_generic(seed_rng):
     alpha=np.random.random()+1.0j*np.random.random()
     assert ham_dense2+alpha*ham_dense==pytest.approx(quad_sb_to_dense(ham_sb2+alpha*ham_sb))
 
+@pytest.mark.xfail(reason="Sparse is not implemented yet")
 def test_quad_sb_sparse_generic(seed_rng):
     L=4
     ham_sb=np.random.random(size=(L,L))+1.0j*np.random.random(size=(L,L))
