@@ -81,5 +81,7 @@ def eigu(mat):
         Compute the eigenvalues and eigenvectors of a dense unitary matrix using
         the hermitian numpy.linalg.eigh instead of the generic numpy.linalg.eig
     '''
-    _,evv=la.eigh(mat+mat.T.conj())
-    return np.einsum("ba,bc,ca->a",evv.conj(),mat,evv),evv
+    return la.eig(mat)
+    #Better implementation coming soon, needs to take into account orthogonal matrix degeneracy
+    # _,evv=la.eigh(mat+mat.T.conj())
+    # return np.einsum("ba,bc,ca->a",evv.conj(),mat,evv),evv

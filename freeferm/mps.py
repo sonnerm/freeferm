@@ -2,7 +2,7 @@ import numpy as np
 import numpy.linalg as la
 from .utils import check_dense_lmax,check_sparse_lmax,SZ
 
-def circuit_to_mps(init,circ,chi=None,cutoff=None):
+def apply_circuit_to_mps(init,circ,chi=None,cutoff=None):
     '''
         Apply a quantum circuit to an initial MPS inplace. If chi or cutoff is set,
         it performs an svd compression to limit bond dimension or cutoff low degrees

@@ -28,8 +28,25 @@ def quad_dense_to_sb(quad):
 
 def quad_sparse_to_sb(quad):
     raise NotImplementedError()
-    # L=int(np.log2(len(quad)))
-    # ret=np.zeros((2*L,2*L),dtype=complex)
+    L=int(np.log2(len(quad)))
+    ret=np.zeros((2*L,2*L),dtype=quad.dtype)
+    vac=dense_vac(L)
+    full=dense_full(L)
+    qvac=quad@vac
+    qfull=quad@full
+    vacs=np.array([dense_cd(L,i)@vac for i in range(L)])
+    fulls=np.array([dense_c(L,i)@full for i in range(L)])
+    qvacs=np.array([quad@v for v in vacs])
+    for i in range(L):
+        for j in range(L):
+            cc=(dense_cd(L,i)@vacs[j]).conj()@qvac
+            dd=(dense_c(L,i)@fulls[j]).conj()@qfull
+            cd=qvacs[i].conj()@qvacs[j]
+            ret[2*i,2*j]=cc+dd+cd-cd.conj()
+            ret[2*i+1,2*j]=1.0j*(cc-dd+cd+cd.conj())
+            ret[2*i,2*j+1]=1.0j*(cc-dd-cd-cd.conj())
+            ret[2*i+1,2*j+1]=cc+dd+cd.conj()-cd
+    return np.einsum("ab,db",vacs.conj(),qvacs)
     # vac=dense_vac(L)/np.sqrt(2)+1.0j*dense_full(L)/np.sqrt(2)
     # vacs=[dense_ma(L,i)@vac for i in range(2*L)]
     # for i in range(2*L):

@@ -71,10 +71,23 @@ def test_dense_full():
     assert (Sp@dense_full(1) == np.array([0.0,0.0])).all()
     assert (Sm@dense_full(1) == dense_vac(1)).all()
     assert (dense_vac(3)@dense_full(3) == 0.0).all()
-def test_eigu(seed_rng):
+def test_eigu_complex(seed_rng):
     L=20
     herm=np.random.random(size=(L,L))+1.0j*np.random.random(size=(L,L))
     herm=herm+herm.T.conj()
+    _,U=la.eigh(herm)
+    eveu,evveu=eigu(U)
+    ev,evv=la.eig(U)
+    assert np.abs(ev)==pytest.approx(1.0)
+    assert np.abs(eveu)==pytest.approx(1.0)
+    assert ev[np.argsort(np.angle(ev))]==pytest.approx(eveu[np.argsort(np.angle(eveu))])
+    M=(evv[:,np.argsort(np.angle(ev))].T.conj()@evveu[:,np.argsort(np.angle(eveu))])
+    assert M==pytest.approx(np.diag(np.diag(M)))
+
+def test_eigu_real(seed_rng):
+    L=20
+    herm=np.random.random(size=(L,L))
+    herm=herm+herm.T
     _,U=la.eigh(herm)
     eveu,evveu=eigu(U)
     ev,evv=la.eig(U)
