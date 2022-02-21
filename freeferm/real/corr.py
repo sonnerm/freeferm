@@ -36,9 +36,9 @@ def dense_to_corr(dense):
     for i in range(2*L):
         for j in range(2*L):
             corr[i,j]=phio[i].conj()@phio[j]
-    return corr-np.eye(2*L) #our convention for the correlation matrix
+    return corr-np.eye(2*L)/2 #our convention for the correlation matrix
 def corr_vac(L):
-    return np.diag(([1.0j,0]*L)[:-1],1)+np.diag(([-1.0j,0]*L)[:-1],-1)
+    return np.diag(([-0.5j,0]*L)[:-1],1)+np.diag(([0.5j,0]*L)[:-1],-1)
 
 def corr_full(L):
-    return np.diag(([-1.0j,0]*L)[:-1],1)+np.diag(([1.0j,0]*L)[:-1],-1)
+    return np.diag(([0.5j,0]*L)[:-1],1)+np.diag(([-0.5j,0]*L)[:-1],-1)
