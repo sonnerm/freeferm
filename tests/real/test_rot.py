@@ -5,6 +5,7 @@ import numpy.linalg as la
 import numpy as np
 import pytest
 
+@pytest.mark.xfail(reason="Only projective works so far")
 def test_rot_sb_dense_unitary(seed_rng):
     L=4
     ham_sb=np.random.random(size=(2*L,2*L))

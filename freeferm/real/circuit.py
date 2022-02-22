@@ -1,6 +1,7 @@
 import numpy as np
 from .. import block
 from .rot import rot_sb_to_dense
+import numpy.linalg as la
 def rot_sb_to_circuit(rot):
     '''
         Decompose a single body rotation matrix into a quantum circuit.
@@ -40,13 +41,13 @@ def corr_to_circuit(corr,nbcutoff=1e-10):
         for b in range(2,2*L-l+1,2):
             sub=ccorr[l:b+l,l:b+l]
             ev,evv=la.eigh(sub)
-            if min(ev)<-1+nbcutoff:
+            if min(ev)<-0.5+nbcutoff:
                 target=evv[:,0]
                 break
         for i in range(b-4,-1,-2):
-            vs.append((i+l,_find_sb_gate(target[i:i+4])))
+            vs.append(((i+l)//2,_find_sb_gate(target[i:i+4])))
             target=block([np.eye(i),vs[-1][1],np.eye(b-i-4)])@target
-            rot=block([np.eye(i+l),vs[-1][1],2*L-i-l-4])
+            rot=block([np.eye(i+l),vs[-1][1],np.eye(2*L-i-l-4)])
             ccorr=rot@ccorr@rot.T
     if ccorr[-2,-1].imag<0:
         for k,(i,r) in list(enumerate(vs))[::-1]:

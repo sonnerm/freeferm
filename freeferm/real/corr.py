@@ -1,8 +1,9 @@
 import numpy as np
 import numpy.linalg as la
-from .. import check_sparse_lmax
+from .. import check_sparse_lmax,apply_circuit_to_mps,mps_vac
 from .quad import quad_sb_to_sparse,quad_sb_to_dense
 from .ops import dense_ma
+from .circuit import corr_to_circuit
 def corr_to_dense(corr,sparse=False):
     '''
         Find the dense vector corresponding to the Gaussian state with correlation matrix corr.
@@ -19,7 +20,7 @@ def corr_to_mps(corr,nbcutoff=1e-10,chi=None,svd_cutoff=None):
     '''
     L=corr.shape[0]//2
     circ=corr_to_circuit(corr,nbcutoff)
-    return circuit_to_mps(mps_vac(L),circ,chi,svd_cutoff)
+    return apply_circuit_to_mps(mps_vac(L),circ,chi,svd_cutoff)
 
 def mps_to_corr(mps):
     '''
