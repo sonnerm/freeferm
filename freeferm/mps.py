@@ -12,20 +12,54 @@ def apply_circuit_to_mps(init,circ,chi=None,cutoff=None):
     for c in circ:
         i,gate,stri=c[0],c[1],c[2]
         if stri:
-            for j in range(i):
-                init[j]=np.einsum("abc,bd->adc",init[j],SZ)
-        l=int(np.log2(gate.shape[0]))
-        inter=dense_to_mps_slice(np.einsum("abc,bd->adc",mps_slice_to_dense(init[i:i+l]),gate))
+            for j in range(i-1):
+                init[j]=np.einsum("adc,bd->abc",init[j],SZ)
+        # l=int(np.log2(gate.shape[0]))
+        l=2
+        inter=dense_to_mps_slice(np.einsum("adc,bd->abc",mps_slice_to_dense(init[i:i+l]),gate))
         if chi is not None or cutoff is not None:
             inter=compress_svd(inter,chi,cutoff)
         init[i:i+l]=inter
     return init
+def is_canonical(mps,eps=1e-8):
+    for m in mps[:-1]:
+        mm=m.reshape((m.shape[0]*m.shape[1],m.shape[2]))
+        if not np.allclose(mm.T.conj()@mm,np.eye(mm.shape[1]),atol=eps):
+            return False
+    return True
 def compress_svd(mps,chi=None,cutoff=None):
     '''
         Compresses an MPS given as a list of matrices with the indices
         (left,physical,right) inplace. Returns mps for convenience.
     '''
-    raise NotImplementedError()
+    if chi is None:
+        chi=2**30 #very high value
+    if cutoff is None:
+        cutoff=0
+    if len(mps)==1:
+        return mps
+    d=mps[0].shape[1]
+    tchi=mps[0].shape[0]
+    car=mps[0].reshape((mps[0].shape[0]*mps[0].shape[1],mps[0].shape[2]))
+    print([m.shape for m in mps])
+    for i,m in enumerate(mps[1:]):
+        d=mps[i].shape[1]
+        car=np.einsum("ab,bcd->acd",car,m).reshape((car.shape[0],-1))
+        u,s,vh=la.svd(car)
+        if np.all(s>cutoff):
+            tchi=min(len(s),chi)
+        else:
+            tchi=min(np.argmin(s>cutoff),chi)
+        s=s[:tchi]
+        u=u[:,:tchi]
+        vh=vh[:tchi,:]
+        mps[i]=u.reshape((u.shape[0]//d,d,tchi))
+        car=np.einsum("a,ab->ab",s,vh)
+        print(car.shape)
+        print(m.shape)
+        car=car.reshape((m.shape[1]*car.shape[0],car.shape[1]//m.shape[1]))
+    mps[-1]=car.reshape((car.shape[0]//mps[-1].shape[1],mps[-1].shape[1],mps[-1].shape[2]))
+    return mps
 def mps_slice_to_dense(mps):
     check_sparse_lmax(len(mps))
     ret=mps[0]

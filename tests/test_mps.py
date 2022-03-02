@@ -1,5 +1,5 @@
 import pytest
-from freeferm import mps_to_dense,dense_to_mps
+from freeferm import mps_to_dense,dense_to_mps,is_canonical,compress_svd
 from freeferm import mpo_to_dense,dense_to_mpo
 from freeferm import mps_slice_to_dense,dense_to_mps_slice
 from freeferm import mpo_slice_to_dense,dense_to_mpo_slice
@@ -27,7 +27,9 @@ def test_mps_dense(seed_rng):
             if i!=L-1: #Last matrix contains norm
                 ms=m.reshape((m.shape[0]*m.shape[1],m.shape[2]))
                 assert ms.T.conj()@ms == pytest.approx(np.eye(ms.shape[1]))
+        assert is_canonical(mps)
         assert mps_to_dense(mps)==pytest.approx(vec)
+        assert mps_to_dense(compress_svd(mps,chi=1024)) == pytest.approx(vec)
 def test_mps_dense_slice(seed_rng):
     for d in [2,3]:
         for L in range(1,4):
@@ -40,7 +42,9 @@ def test_mps_dense_slice(seed_rng):
                 if i!=L-1: #Last matrix contains norm
                     ms=m.reshape((m.shape[0]*m.shape[1],m.shape[2]))
                     assert ms.T.conj()@ms == pytest.approx(np.eye(ms.shape[1]))
+            assert is_canonical(mps)
             assert mps_slice_to_dense(mps)==pytest.approx(vec)
+            assert mps_slice_to_dense(compress_svd(mps,chi=1024)) == pytest.approx(vec)
 
 def test_mpo_dense(seed_rng):
     for L in range(1,4):

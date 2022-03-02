@@ -41,17 +41,24 @@ def corr_to_circuit(corr,nbcutoff=1e-10):
         for b in range(2,2*L-l+1,2):
             sub=ccorr[l:b+l,l:b+l]
             ev,evv=la.eigh(sub)
-            if min(ev)<-0.5+nbcutoff:
-                target=evv[:,0]
+            if max(ev)>0.5-nbcutoff:
+                target=evv[:,-1]
                 break
         for i in range(b-4,-1,-2):
             vs.append(((i+l)//2,_find_sb_gate(target[i:i+4])))
             target=block([np.eye(i),vs[-1][1],np.eye(b-i-4)])@target
             rot=block([np.eye(i+l),vs[-1][1],np.eye(2*L-i-l-4)])
             ccorr=rot@ccorr@rot.T
-    if ccorr[-2,-1].imag<0:
+    if ccorr[-2,-1].imag>0:
         for k,(i,r) in list(enumerate(vs))[::-1]:
-            if i==2*L-4:
+            if i==L-2:
                 vs[k]=(i,np.diag([1,1,1,-1])@r)
                 break
-    return [(v[0],rot_sb_to_dense(v[1]),True if la.det(v[1])<0 else False,v[1]) for v in vs]
+    return [(v[0],rot_sb_to_dense(v[1]).T.conj(),True if la.det(v[1])<0 else False,v[1].T) for v in vs[::-1]]
+def apply_circuit_to_corr(corr,circ):
+    ccorr=corr
+    L=corr.shape[0]//2
+    for c in circ:
+        rot=block([np.eye(2*c[0]),c[3],np.eye(2*L-2*c[0]-4)])
+        ccorr=rot@ccorr@rot.T
+    return ccorr
