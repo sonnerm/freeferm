@@ -1,9 +1,11 @@
 import pytest
+import numpy.linalg as la
 from freeferm import mps_to_dense,dense_to_mps,is_canonical,compress_svd
-from freeferm import mpo_to_dense,dense_to_mpo
+from freeferm import mpo_to_dense,dense_to_mpo,kron
 from freeferm import mps_slice_to_dense,dense_to_mps_slice
 from freeferm import mpo_slice_to_dense,dense_to_mpo_slice
 from freeferm import mps_vac,mps_full,dense_vac,dense_full
+from freeferm import apply_circuit_to_mps,apply_circuit_to_dense
 import numpy as np
 def test_mps_vac():
     assert mps_to_dense(mps_vac(1))==pytest.approx(dense_vac(1))
@@ -45,6 +47,12 @@ def test_mps_dense_slice(seed_rng):
             assert is_canonical(mps)
             assert mps_slice_to_dense(mps)==pytest.approx(vec)
             assert mps_slice_to_dense(compress_svd(mps,chi=1024)) == pytest.approx(vec)
+            if d==2:
+                mps[-1]=np.einsum("adc,bd->abc",mps[-1],np.diag([1,-1]))
+                vecm=np.einsum("abc,bd->abc",vec,np.kron(np.eye(2**(L-1)),np.diag([1,-1])))
+                # vecm=vec
+                assert mps_slice_to_dense(mps)==pytest.approx(vecm)
+
 
 def test_mpo_dense(seed_rng):
     for L in range(1,4):
@@ -73,3 +81,24 @@ def test_mpo_dense_slice(seed_rng):
                 ms=m.reshape((m.shape[0]*m.shape[1]*m.shape[2],m.shape[3]))
                 assert ms.T.conj()@ms == pytest.approx(np.eye(ms.shape[1]))
         assert mpo_slice_to_dense(mpo)==pytest.approx(vec)
+def test_apply_circuit(seed_rng):
+    L=6
+    vec=np.random.random(size=(2**L))+1.0j*np.random.random(size=(2**L))
+    mps=dense_to_mps(vec)
+    for s in range(1,L+1):
+        for i in range(L-s+1):
+            gate=np.random.random(size=(2**s,2**s))+np.random.random(size=(2**s,2**s))*1.0j
+            gate=la.eigh(gate)[1]
+            mps=apply_circuit_to_mps(mps,[(i,gate,False)])
+            vec=apply_circuit_to_dense(vec,[(i,gate,False)])
+            assert is_canonical(mps)
+            assert mps_to_dense(mps)==pytest.approx(vec)
+
+    for s in range(1,L+1):
+        for i in range(L-s+1):
+            gate=np.random.random(size=(2**s,2**s))+np.random.random(size=(2**s,2**s))*1.0j
+            gate=la.eigh(gate)[1]
+            mps=apply_circuit_to_mps(mps,[(i,gate,True)])
+            vec=apply_circuit_to_dense(vec,[(i,gate,True)])
+            assert is_canonical(mps)
+            assert mps_to_dense(mps)==pytest.approx(vec)

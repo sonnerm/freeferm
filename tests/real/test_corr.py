@@ -29,7 +29,7 @@ def test_corr_dense(seed_rng):
     assert np.abs(eve.T.conj()@phi)==pytest.approx(1.0)
 
 def test_corr_mps_short(seed_rng):
-    L=2
+    L=6
     ham=1.0j*np.random.random(size=(2*L,2*L))
     ham=ham.T.conj()+ham
     ham=quad_sb_to_dense(ham)
@@ -37,10 +37,17 @@ def test_corr_mps_short(seed_rng):
     corr=dense_to_corr(phi)
     correv=la.eigvalsh(corr)
     assert np.abs(correv)==pytest.approx(0.5)
+    # circ=corr_to_circuit(corr)
+    # mcirc=[(c[0],c[1],False) for c in circ]
+    # densi=apply_circuit_to_dense(dense_vac(L),mcirc)
+    # mpsi=apply_circuit_to_dense(dense_vac(L),mcirc)
     mpsi=corr_to_mps(corr)
+    # assert np.abs(densi.T.conj()@mps_to_dense(mpsi))==pytest.approx(1.0)
+    # assert np.abs(densi.T.conj()@phi)==pytest.approx(1.0)
     eve=mps_to_dense(mpsi)
     assert is_canonical(mpsi)
     assert np.abs(eve.T.conj()@phi)==pytest.approx(1.0)
+@pytest.mark.skip
 def test_corr_mps_long(seed_rng):
     L=20
     corr=np.random.random(size=(2*L,2*L))

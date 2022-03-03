@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.linalg as la
-from .utils import check_dense_lmax,check_sparse_lmax,SZ
+from .utils import check_dense_lmax,check_sparse_lmax,SZ,kron
+
 
 def apply_circuit_to_mps(init,circ,chi=None,cutoff=None):
     '''
@@ -12,10 +13,9 @@ def apply_circuit_to_mps(init,circ,chi=None,cutoff=None):
     for c in circ:
         i,gate,stri=c[0],c[1],c[2]
         if stri:
-            for j in range(i-1):
-                init[j]=np.einsum("adc,bd->abc",init[j],SZ)
-        # l=int(np.log2(gate.shape[0]))
-        l=2
+            for j in range(i):
+                init[j]=np.einsum("adc,bd->abc",init[j],kron([SZ]*int(np.log2(init[j].shape[1]))))
+        l=int(np.log2(gate.shape[0])//np.log2(init[i].shape[1]))
         inter=dense_to_mps_slice(np.einsum("adc,bd->abc",mps_slice_to_dense(init[i:i+l]),gate))
         if chi is not None or cutoff is not None:
             inter=compress_svd(inter,chi,cutoff)
@@ -41,7 +41,6 @@ def compress_svd(mps,chi=None,cutoff=None):
     d=mps[0].shape[1]
     tchi=mps[0].shape[0]
     car=mps[0].reshape((mps[0].shape[0]*mps[0].shape[1],mps[0].shape[2]))
-    print([m.shape for m in mps])
     for i,m in enumerate(mps[1:]):
         d=mps[i].shape[1]
         car=np.einsum("ab,bcd->acd",car,m).reshape((car.shape[0],-1))
@@ -55,8 +54,6 @@ def compress_svd(mps,chi=None,cutoff=None):
         vh=vh[:tchi,:]
         mps[i]=u.reshape((u.shape[0]//d,d,tchi))
         car=np.einsum("a,ab->ab",s,vh)
-        print(car.shape)
-        print(m.shape)
         car=car.reshape((m.shape[1]*car.shape[0],car.shape[1]//m.shape[1]))
     mps[-1]=car.reshape((car.shape[0]//mps[-1].shape[1],mps[-1].shape[1],mps[-1].shape[2]))
     return mps

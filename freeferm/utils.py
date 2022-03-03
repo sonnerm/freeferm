@@ -29,6 +29,7 @@ def kron(args):
     '''
         Calculate the kronecker product (=outer product for matrices) of a list of matrices
     '''
+    args=args[::-1]
     ret=args[0]
     for a in args[1:]:
         ret=np.kron(a,ret)
@@ -38,6 +39,7 @@ def outer(args):
     '''
         Calculate the outer product of a list of vectors
     '''
+    args=args[::-1]
     ret=args[0]
     for a in args[1:]:
         ret=np.outer(a,ret)
