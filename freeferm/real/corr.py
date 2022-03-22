@@ -14,13 +14,13 @@ def corr_to_dense(corr,sparse=False):
         sla.eigsh(quad_sb_to_sparse(corr),k=1,which="SA")[1][:,0]
     else:
         return la.eigh(quad_sb_to_dense(corr))[1][:,0]
-def corr_to_mps(corr,nbcutoff=1e-10,chi=None,svd_cutoff=None):
+def corr_to_mps(corr,cluster=None,nbcutoff=1e-10,chi=None,svd_cutoff=None):
     '''
         Find an MPS
     '''
     L=corr.shape[0]//2
     circ=corr_to_circuit(corr,nbcutoff)
-    return apply_circuit_to_mps(mps_vac(L),circ,chi,svd_cutoff)
+    return apply_circuit_to_mps(mps_vac(L,cluster=cluster),circ,chi,svd_cutoff)
 
 def mps_to_corr(mps):
     '''

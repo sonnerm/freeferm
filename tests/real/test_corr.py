@@ -45,8 +45,7 @@ def test_corr_mps_short(seed_rng):
     mpsi=corr_to_mps(corr)
     # assert np.abs(densi.T.conj()@ttslice_to_dense(mpsi))==pytest.approx(1.0)
     # assert np.abs(densi.T.conj()@phi)==pytest.approx(1.0)
-    eve=ttslice_to_dense(mpsi)
-    assert is_canonical(mpsi)
+    eve=ttslice_to_dense(mpsi)[0,:,0]
     assert np.abs(eve.T.conj()@phi)==pytest.approx(1.0)
 
 def test_corr_mps_short_double(seed_rng):
@@ -56,9 +55,9 @@ def test_corr_mps_short_double(seed_rng):
     ham=quad_sb_to_dense(ham)
     phi=la.eigh(ham)[1][:,0]
     corr=dense_to_corr(phi)
-    mpsi=corr_to_mps(corr,d=4)
-    eve=ttslice_to_dense(mpsi)
-    assert is_canonical(mpsi)
+    mpsi=corr_to_mps(corr,cluster=((4,),)*(L//2))
+    eve=ttslice_to_dense(mpsi)[0,:,0]
+    # assert is_canonical(mpsi)
     assert np.abs(eve.T.conj()@phi)==pytest.approx(1.0)
 @pytest.mark.skip
 def test_corr_mps_long(seed_rng):

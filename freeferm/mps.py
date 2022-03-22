@@ -64,8 +64,14 @@ def apply_circuit_to_mps(init,circ,chi=None,cutoff=None):
 #         # truncation params should be set globally i think, otherwise:
 #         # init.truncate(chi=chi,cutoff=cutoff)
 #     return init
-def mps_vac(L):
-    return [np.array([0,1]).reshape((1,2,1))]*L
+def mps_vac(L,cluster=None):
+    ret=[np.array([0,1]).reshape((1,2,1))]*L
+    if cluster is None:
+        return ret
+    return recluster(ret,cluster)
 
-def mps_full(L):
-    return [np.array([1,0]).reshape((1,2,1))]*L
+def mps_full(L,cluster=None):
+    ret=[np.array([1,0]).reshape((1,2,1))]*L
+    if cluster is None:
+        return ret
+    return recluster(ret,cluster)
