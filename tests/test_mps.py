@@ -34,3 +34,16 @@ def test_apply_circuit(seed_rng):
             mps=apply_circuit_to_mps(mps,[(i,gate,True)])
             vec=apply_circuit_to_dense(vec,[(i,gate,True)])
             assert ttslice_to_dense(mps)==pytest.approx(vec[None,:,None])
+
+def test_apply_circuit_truncate(seed_rng):
+    L=10
+    vec=np.random.random(size=(2**L))+1.0j*np.random.random(size=(2**L))
+    mps=dense_to_ttslice(vec[None,:,None],cluster=((2,),)*L)
+    for _ in range(20):
+        for i in range(L-1):
+            gate=np.random.random(size=(4,4))+np.random.random(size=(4,4))*1.0j
+            gate=la.eigh(gate)[1]
+            mps=apply_circuit_to_mps(mps,[(i,gate,False)],chi=200,cutoff=0.0)
+            vec=apply_circuit_to_dense(vec,[(i,gate,False)])
+            assert ttslice_to_dense(mps)==pytest.approx(vec[None,:,None])
+            assert max(m.shape[0] for m in mps)<=200
