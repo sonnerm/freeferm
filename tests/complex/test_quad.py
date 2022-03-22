@@ -1,7 +1,7 @@
 from freeferm.complex import quad_sb_to_dense,quad_dense_to_sb
 from freeferm.complex import quad_sb_to_sparse,quad_sparse_to_sb
 from freeferm.complex import quad_sb_to_mpo
-from freeferm import mpo_to_dense
+from ttarray.raw import ttslice_to_dense
 import numpy.linalg as la
 import numpy as np
 import pytest
@@ -37,7 +37,7 @@ def test_quad_sb_mpo_generic(seed_rng):
     ham_sb=np.random.random(size=(L,L))+1.0j*np.random.random(size=(L,L))
     ham_mpo=quad_sb_to_mpo(ham_sb)
     ham_dense=quad_sb_to_dense(ham_sb)
-    assert mpo_to_dense(ham_mpo)==pytest.approx(ham_dense)
+    assert ttslice_to_dense(ham_mpo)==pytest.approx(ham_dense)
 
 def test_quad_sb_dense_generic(seed_rng):
     L=4
