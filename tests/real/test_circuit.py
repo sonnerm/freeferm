@@ -31,5 +31,5 @@ def test_corr_to_circuit_long(seed_rng):
     assert apply_circuit_to_corr(corr,circ_bw) == pytest.approx(corr_vac(L))
     assert apply_circuit_to_corr(corr_vac(L),circ) == pytest.approx(corr)
 
-def test_rot_sb_to_circuit(seed_rng):
-    raise NotImplementedError()
+# def test_rot_sb_to_circuit(seed_rng):
+#     raise NotImplementedError()
