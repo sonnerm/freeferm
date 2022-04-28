@@ -52,7 +52,25 @@ def apply_circuit_to_mps(init,circ,chi=None,cutoff=None):
             assert is_canonical(init,center)
     return init
 
-# how it should look like with ttarray finished: (compare to apply_circuit_to_dense...)
+# how it should look like with ttarray working but dumb
+# def apply_circuit_to_mps_3(init,circ):
+#     for c in circ:
+#         i,gate,stri=c[0],c[1],c[2]
+#         if stri:
+#             mpo=ttarray.mouter([SZ]*i+[gate]+[ID]*(int(math.log2(init.shape[0]//2**i//gate.shape[0]))))
+#         else:
+#             mpo=ttarray.mouter([ID]*i+[gate]+[ID]*(int(math.log2(init.shape[0]//2**i//gate.shape[0]))))
+#         init.canonicalize(locate_tensor(2**i*gate.shape[1],[cl[0] for cl in init.cluster]))
+#         ncenter=init.center
+#         nncenter=locate_tensor(2**i,[cl[0] for cl in init.cluster])
+#         init=mpo@init
+#         init.setcenter_unchecked(ncenter) # this is actually not true, but it will work
+#         init.canonicalize(locate_tensor(2**i,[cl[0] for cl in init.cluster]))
+#         if chi is not None or cutoff is not None:
+#             init.truncate(initsep,from=nncenter,to=ncenter,chi_max=chi,cutoff=cutoff)
+#     return init
+
+# how it should look like with ttarray finished and smart: (compare to apply_circuit_to_dense...)
 # def apply_circuit_to_mps_2(init,circ):
 #     for c in circ:
 #         i,gate,stri=c[0],c[1],c[2]
@@ -61,8 +79,7 @@ def apply_circuit_to_mps(init,circ,chi=None,cutoff=None):
 #         else:
 #             mpo=ttarray.mouter([ID]*i+[gate]+[ID]*(int(math.log2(init.shape[0]//2**i//gate.shape[0]))))
 #         init=mpo@init
-#         # truncation params should be set globally i think, otherwise:
-#         # init.truncate(chi=chi,cutoff=cutoff)
+#         # truncation params should be set globally i think
 #     return init
 def mps_vac(L,cluster=None):
     ret=[np.array([0,1]).reshape((1,2,1))]*L
