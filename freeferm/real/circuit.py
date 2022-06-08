@@ -35,6 +35,7 @@ def corr_to_circuit(corr,nbcutoff=1e-10):
         the algorithm described by Fishman and White Phys. Rev. B 92, 075132.
     '''
     ccorr=np.copy(corr)
+    # ccorr=corr+0.5*np.eye(corr.shape[0])
     L=ccorr.shape[0]//2
     vs=[]
     for l in range(0,2*L,2):
@@ -44,6 +45,11 @@ def corr_to_circuit(corr,nbcutoff=1e-10):
             if max(ev)>0.5-nbcutoff:
                 target=evv[:,-1]
                 break
+            if b==2*L-l:
+                target=evv[:,-1]
+                # assert False
+                import warnings
+                warnings.warn("nbcutoff not reached %f"%(0.5-max(ev)))
         for i in range(b-4,-1,-2):
             vs.append(((i+l)//2,_find_sb_gate(target[i:i+4])))
             target=block([np.eye(i),vs[-1][1],np.eye(b-i-4)])@target
