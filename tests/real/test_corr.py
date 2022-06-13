@@ -1,11 +1,11 @@
 import pytest
 import numpy as np
 import numpy.linalg as la
-from freeferm import apply_circuit_to_dense,apply_circuit_to_mps,mps_vac,is_canonical
-from ttarray.raw import ttslice_to_dense,dense_to_ttslice
+from freeferm import apply_circuit_to_dense,apply_circuit_to_mps,mps_vac
 from freeferm.real import corr_vac,corr_full,dense_vac,dense_full
 from freeferm.real import corr_to_dense,dense_to_corr,mps_to_corr,corr_to_mps,corr_to_circuit
 from freeferm.real import quad_sb_to_dense
+import ttarray as tt
 
 def test_corr_vac():
     L=4
@@ -32,7 +32,7 @@ def test_corr_dense(seed_rng):
 def test_corr_to_mps(seed_rng):
     L=6
     phi=np.random.random(size=(2**L,))+1.0j*np.random.random(size=(2**L,))
-    ttphi=dense_to_ttslice(phi[None,:,None],((2,),)*L)
+    ttphi=tt.array(phi,cluster=((2,),)*L)
     dcorr=dense_to_corr(phi)
     dcorr=dcorr-np.diag(np.diag(dcorr))
     assert mps_to_corr(ttphi)==pytest.approx(dcorr)
@@ -52,7 +52,7 @@ def test_scorr_mps_short(seed_rng):
     mpsi=corr_to_mps(corr)
     # assert np.abs(densi.T.conj()@ttslice_to_dense(mpsi))==pytest.approx(1.0)
     # assert np.abs(densi.T.conj()@phi)==pytest.approx(1.0)
-    eve=ttslice_to_dense(mpsi)[0,:,0]
+    eve=mpsi.todense()
     assert np.abs(eve.T.conj()@phi)==pytest.approx(1.0)
     assert mps_to_corr(mpsi)==pytest.approx(corr)
 def test_corr_mps_short_double(seed_rng):
@@ -63,7 +63,7 @@ def test_corr_mps_short_double(seed_rng):
     phi=la.eigh(ham)[1][:,0]
     corr=dense_to_corr(phi)
     mpsi=corr_to_mps(corr,cluster=((4,),)*(L//2))
-    eve=ttslice_to_dense(mpsi)[0,:,0]
+    eve=mpsi.todense()
     assert np.abs(eve.T.conj()@phi)==pytest.approx(1.0)
     assert mps_to_corr(mpsi)==pytest.approx(corr)
 # @pytest.mark.skip
