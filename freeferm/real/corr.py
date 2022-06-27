@@ -32,7 +32,7 @@ def mps_to_corr(mps,normalize=False):
     counter=int(math.log2(mps.shape[0]))
     mps=mps.recluster(((2,),)*counter)
     mps.canonicalize(0)
-    mps=mps.asmatrices()
+    mps=mps.tomatrices()
     ret=np.zeros((len(mps)*2,len(mps)*2),dtype=complex)
     SX=np.array([[0,1],[1,0]])
     SY=np.array([[0,1j],[-1j,0]])
