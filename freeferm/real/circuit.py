@@ -65,7 +65,7 @@ def corr_to_circuit(corr,nbcutoff=1e-10):
             vs.append(((i+l)//2,_find_sb_gate(target[i:i+4])))
             target=_apply_rot_to_vec(target,i,b,vs[-1][1])
             ccorr=_apply_rot_to_corr(ccorr,(i+l)//2,vs[-1][1])
-        print(" b",b)    
+        print(" b",b)
     if ccorr[-2,-1].imag>0:
         for k,(i,r) in list(enumerate(vs))[::-1]:
             if i==L-2:
@@ -74,11 +74,17 @@ def corr_to_circuit(corr,nbcutoff=1e-10):
     return [(v[0],rot_sb_to_dense(v[1]).T.conj(),True if la.det(v[1])<0 else False,v[1].T) for v in vs[::-1]]
 def _apply_rot_to_corr(corr,pos,rot):
     L=corr.shape[0]//2
-    blocks=[[corr[:2*pos,:2*pos],corr[:2*pos,2*pos:2*pos+4]@rot.T,corr[:2*pos,2*pos+4:]],
-    [rot@corr[2*pos:2*pos+4,:2*pos],rot@corr[2*pos:2*pos+4,2*pos:2*pos+4]@rot.T,rot@corr[2*pos:2*pos+4,2*pos+4:]],
-    [corr[2*pos+4:,:2*pos],corr[2*pos+4:,2*pos:2*pos+4]@rot.T,corr[2*pos+4:,2*pos+4:]]
-    ]
-    return np.block(blocks)
+    ret=np.zeros_like(corr)
+    ret[:2*pos,:2*pos]=corr[:2*pos,:2*pos]
+    ret[:2*pos,2*pos:2*pos+4]=corr[:2*pos,2*pos:2*pos+4]@rot.T
+    ret[:2*pos,2*pos+4:]=corr[:2*pos,2*pos+4:]
+    ret[2*pos:2*pos+4,:2*pos]=rot@corr[2*pos:2*pos+4,:2*pos]
+    ret[2*pos:2*pos+4,2*pos:2*pos+4]=rot@corr[2*pos:2*pos+4,2*pos:2*pos+4]@rot.T
+    ret[2*pos:2*pos+4,2*pos+4:]=rot@corr[2*pos:2*pos+4,2*pos+4:]
+    ret[2*pos+4:,:2*pos]=corr[2*pos+4:,:2*pos]
+    ret[2*pos+4:,2*pos:2*pos+4]=corr[2*pos+4:,2*pos:2*pos+4]@rot.T
+    ret[2*pos+4:,2*pos+4:]=corr[2*pos+4:,2*pos+4:]
+    return ret
 
 
 def _apply_rot_to_vec(vec,i,b,rot):
