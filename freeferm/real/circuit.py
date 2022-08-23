@@ -40,6 +40,7 @@ def corr_to_circuit(corr,nbcutoff=1e-10):
     L=ccorr.shape[0]//2
     vs=[]
     for l in range(0,2*L,2):
+        print("pos: ",l,end="")
         for b in range(2,2*L-l+1,2):
             sub=ccorr[l:b+l,l:b+l]
             if sub.shape[0]>10:
@@ -65,6 +66,7 @@ def corr_to_circuit(corr,nbcutoff=1e-10):
             target=block([np.eye(i),vs[-1][1],np.eye(b-i-4)])@target
             rot=block([np.eye(i+l),vs[-1][1],np.eye(2*L-i-l-4)])
             ccorr=rot@ccorr@rot.T
+        print("b:",b)
     if ccorr[-2,-1].imag>0:
         for k,(i,r) in list(enumerate(vs))[::-1]:
             if i==L-2:
