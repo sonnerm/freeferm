@@ -72,7 +72,7 @@ def corr_to_circuit(corr,nbcutoff=1e-10):
     return [(v[0],rot_sb_to_dense(v[1]).T.conj(),True if la.det(v[1])<0 else False,v[1].T) for v in vs[::-1]]
 def _apply_rot_to_corr(corr,pos,rot):
     L=corr.shape[0]//2
-    ret=np.zeros_like(corr)
+    ret=np.empty_like(corr)
     ret[:2*pos,:2*pos]=corr[:2*pos,:2*pos]
     ret[:2*pos,2*pos:2*pos+4]=corr[:2*pos,2*pos:2*pos+4]@rot.T
     ret[:2*pos,2*pos+4:]=corr[:2*pos,2*pos+4:]
