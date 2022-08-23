@@ -43,7 +43,12 @@ def corr_to_circuit(corr,nbcutoff=1e-10):
         for b in range(2,2*L-l+1,2):
             sub=ccorr[l:b+l,l:b+l]
             if sub.shape[0]>10:
-                ev,evv=spla.eigsh(sub,k=1,which="LA")
+                try:
+                    ev,evv=spla.eigsh(sub,k=1,which="LA")
+                except spla.ArpackNoConvergence:
+                    import warnings
+                    warnings.warn("Lanczos did not converge, falling back")
+                    ev,evv=la.eigh(sub)#ArpackNoConvergence
             else:
                 ev,evv=la.eigh(sub)
             # ev,evv=la.eigh(sub)
