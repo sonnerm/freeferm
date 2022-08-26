@@ -83,7 +83,7 @@ def _apply_rot_to_vec(vec,i,rot):
     vec[i:i+4]=rot@vec[i:i+4]
 
 def apply_circuit_to_corr(corr,circ):
-    L=corr.shape[0]//2
+    corr=corr.copy()
     for c in circ:
         _apply_rot_to_corr(corr,c[0],c[3])
     return corr
