@@ -62,8 +62,8 @@ def corr_to_circuit(corr,nbcutoff=1e-10):
                 warnings.warn("nbcutoff not reached %f"%(0.5-max(ev)))
         for i in range(b-4,-1,-2):
             vs.append(((i+l)//2,_find_sb_gate(target[i:i+4])))
-            target=_apply_rot_to_vec(target,i,b,vs[-1][1])
-            ccorr=_apply_rot_to_corr(ccorr,(i+l)//2,vs[-1][1])
+            _apply_rot_to_vec(target,i,vs[-1][1])
+            _apply_rot_to_corr(ccorr,(i+l)//2,vs[-1][1])
     if ccorr[-2,-1].imag>0:
         for k,(i,r) in list(enumerate(vs))[::-1]:
             if i==L-2:
@@ -72,27 +72,18 @@ def corr_to_circuit(corr,nbcutoff=1e-10):
     return [(v[0],rot_sb_to_dense(v[1]).T.conj(),True if la.det(v[1])<0 else False,v[1].T) for v in vs[::-1]]
 def _apply_rot_to_corr(corr,pos,rot):
     L=corr.shape[0]//2
-    ret=np.empty_like(corr)
-    ret[:2*pos,:2*pos]=corr[:2*pos,:2*pos]
-    ret[:2*pos,2*pos:2*pos+4]=corr[:2*pos,2*pos:2*pos+4]@rot.T
-    ret[:2*pos,2*pos+4:]=corr[:2*pos,2*pos+4:]
-    ret[2*pos:2*pos+4,:2*pos]=rot@corr[2*pos:2*pos+4,:2*pos]
-    ret[2*pos:2*pos+4,2*pos:2*pos+4]=rot@corr[2*pos:2*pos+4,2*pos:2*pos+4]@rot.T
-    ret[2*pos:2*pos+4,2*pos+4:]=rot@corr[2*pos:2*pos+4,2*pos+4:]
-    ret[2*pos+4:,:2*pos]=corr[2*pos+4:,:2*pos]
-    ret[2*pos+4:,2*pos:2*pos+4]=corr[2*pos+4:,2*pos:2*pos+4]@rot.T
-    ret[2*pos+4:,2*pos+4:]=corr[2*pos+4:,2*pos+4:]
-    return ret
+    corr[:2*pos,2*pos:2*pos+4]=corr[:2*pos,2*pos:2*pos+4]@rot.T
+    corr[2*pos:2*pos+4,:2*pos]=rot@corr[2*pos:2*pos+4,:2*pos]
+    corr[2*pos:2*pos+4,2*pos:2*pos+4]=rot@corr[2*pos:2*pos+4,2*pos:2*pos+4]@rot.T
+    corr[2*pos:2*pos+4,2*pos+4:]=rot@corr[2*pos:2*pos+4,2*pos+4:]
+    corr[2*pos+4:,2*pos:2*pos+4]=corr[2*pos+4:,2*pos:2*pos+4]@rot.T
 
 
-def _apply_rot_to_vec(vec,i,b,rot):
-    ret=vec.copy()
-    ret[i:i+4]=rot@ret[i:i+4]
-    return ret
+def _apply_rot_to_vec(vec,i,rot):
+    vec[i:i+4]=rot@vec[i:i+4]
 
 def apply_circuit_to_corr(corr,circ):
-    ccorr=corr
     L=corr.shape[0]//2
     for c in circ:
-        corr=_apply_rot_to_corr(corr,c[0],c[3])
+        _apply_rot_to_corr(corr,c[0],c[3])
     return corr
