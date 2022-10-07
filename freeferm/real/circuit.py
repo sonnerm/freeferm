@@ -1,7 +1,7 @@
 import numpy as np
 from .. import block
 from .rot import rot_sb_to_dense
-import numpy.linalg as la
+import scipy.linalg as la
 import scipy.sparse.linalg as spla
 def rot_sb_to_circuit(rot):
     '''
@@ -28,6 +28,10 @@ def _find_sb_gate(target):
     mat[2]/=np.sqrt(mat[2]@mat[2])
     mat[3]-=(mat[0]@mat[3])*mat[0]+(mat[1]@mat[3])*mat[1]+(mat[2]@mat[3])*mat[2]
     mat[3]/=np.sqrt(mat[3]@mat[3])
+    if la.det(mat)<0:
+        h=np.array(mat[2])
+        mat[2]=mat[3]
+        mat[3]=h
     return mat
 def corr_to_circuit(corr,nbcutoff=1e-10):
     '''
@@ -48,7 +52,12 @@ def corr_to_circuit(corr,nbcutoff=1e-10):
             #     except spla.ArpackNoConvergence:
             #         import warnings
             #         warnings.warn("Lanczos did not converge, falling back")
-            ev,evv=la.eigh(sub)#Turns out that full diagonalization is in practice faster 
+            try:
+                ev,evv=la.eigh(sub)#Turns out that full diagonalization is in practice faster 
+            except la.LinAlgError:
+                warnings.warn("evr method did not converge, falling back to ev")
+                ev.evv=la.eigh(sub,driver="ev")
+
             # else:
             #     ev,evv=la.eigh(sub)
             # ev,evv=la.eigh(sub)
