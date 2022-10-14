@@ -2,7 +2,6 @@ import numpy as np
 from .. import block
 from .rot import rot_sb_to_dense
 import scipy.linalg as la
-import scipy.sparse.linalg as spla
 def rot_sb_to_circuit(rot):
     '''
         Decompose a single body rotation matrix into a quantum circuit.
@@ -18,7 +17,7 @@ def rot_circuit_to_sb(L,circ):
 def _find_sb_gate(target):
     #start with a random matrix, set first row to target.real, second to target.imag
     #run Gram schmidt
-    mat=np.random.random(size=(4,4))
+    mat=np.random.random(size=(4,4),dtype=np.float128)
     mat[0]=target.real
     mat[0]/=np.sqrt(mat[0]@mat[0])
     mat[1]=target.imag
@@ -33,13 +32,75 @@ def _find_sb_gate(target):
         mat[2]=mat[3]
         mat[3]=h
     return mat
+def _mp_find_sb_gate(target,mp):
+    #start with a random matrix, set first row to target.real, second to target.imag
+    #run Gram schmidt
+    mat=mp.randmatrix(4,4)
+    mat=np.array(mat.tolist())
+    mat[0,0]=target[0].real
+    mat[0,1]=target[1].real
+    mat[0,2]=target[2].real
+    mat[0,3]=target[3].real
+    mat[0]/=mp.sqrt(mat[0]@mat[0])
+    mat[1,0]=target[0].imag
+    mat[1,1]=target[1].imag
+    mat[1,2]=target[2].imag
+    mat[1,3]=target[3].imag
+    mat[1]-=(mat[0]@mat[1])*mat[0]
+    mat[1]/=mp.sqrt(mat[1]@mat[1])
+    mat[2]-=(mat[0]@mat[2])*mat[0]+(mat[1]@mat[2])*mat[1]
+    mat[2]/=mp.sqrt(mat[2]@mat[2])
+    mat[3]-=(mat[0]@mat[3])*mat[0]+(mat[1]@mat[3])*mat[1]+(mat[2]@mat[3])*mat[2]
+    mat[3]/=mp.sqrt(mat[3]@mat[3])
+    if mp.det(mp.matrix(mat))<0:
+        h=mat[2,:].copy()
+        mat[2,:]=mat[3,:]
+        mat[3,:]=h
+    return mp.matrix(mat)
+def _mp_to_np(mat):
+    return np.array([[np.float64(x) for x in y] for y in mat.tolist()])
+def mp_corr_to_circuit(corr,nbcutoff=1e-10,prec=200):
+    '''
+        Find a quantum circuit which transforms the vacuum state into the
+        gaussian state with correlation matrix corr using a modified version of
+        the algorithm described by Fishman and White Phys. Rev. B 92, 075132.
+    '''
+    import mpmath as mp
+    with mp.workprec(prec):
+        nbcutoff=mp.mpf(nbcutoff)
+        ccorr=mp.matrix(corr)
+        # ccorr=corr+0.5*np.eye(corr.shape[0])
+        L=corr.shape[0]//2
+        vs=[]
+        for l in range(0,2*L,2):
+            for b in range(2,2*L-l+1,2):
+                sub=ccorr[l:b+l,l:b+l]
+                ev,evv=mp.eigh(sub)
+                if max(ev)>mp.mpf(0.5)-nbcutoff:
+                    target=evv[:,b-1]
+                    break
+                if b==2*L-l:
+                    target=evv[:,b-1]
+                    import warnings
+                    warnings.warn("nbcutoff not reached %s"%str(0.5-max(ev)))
+            for i in range(b-4,-1,-2):
+                vs.append(((i+l)//2,_mp_find_sb_gate(target[i:i+4],mp)))
+                _apply_rot_to_vec(target,i,vs[-1][1])
+                _apply_rot_to_corr(ccorr,(i+l)//2,vs[-1][1])
+        if ccorr[2*L-2,2*L-1].imag>0:
+            for k,(i,r) in list(enumerate(vs))[::-1]:
+                if i==L-2:
+                    vs[k]=(i,mp.diag([1,1,1,-1])@r)
+                    break
+        return [(v[0],rot_sb_to_dense(_mp_to_np(v[1])).T.conj(),True if mp.det(v[1])<0 else False,_mp_to_np(v[1].T)) for v in vs[::-1]]
+    
 def corr_to_circuit(corr,nbcutoff=1e-10):
     '''
         Find a quantum circuit which transforms the vacuum state into the
         gaussian state with correlation matrix corr using a modified version of
         the algorithm described by Fishman and White Phys. Rev. B 92, 075132.
     '''
-    ccorr=np.copy(corr)
+    ccorr=np.copy(corr,dtype=np.float128)
     # ccorr=corr+0.5*np.eye(corr.shape[0])
     L=ccorr.shape[0]//2
     vs=[]
@@ -79,8 +140,8 @@ def corr_to_circuit(corr,nbcutoff=1e-10):
                 vs[k]=(i,np.diag([1,1,1,-1])@r)
                 break
     return [(v[0],rot_sb_to_dense(v[1]).T.conj(),True if la.det(v[1])<0 else False,v[1].T) for v in vs[::-1]]
+
 def _apply_rot_to_corr(corr,pos,rot):
-    L=corr.shape[0]//2
     corr[:2*pos,2*pos:2*pos+4]=corr[:2*pos,2*pos:2*pos+4]@rot.T
     corr[2*pos:2*pos+4,:2*pos]=rot@corr[2*pos:2*pos+4,:2*pos]
     corr[2*pos:2*pos+4,2*pos:2*pos+4]=rot@corr[2*pos:2*pos+4,2*pos:2*pos+4]@rot.T
