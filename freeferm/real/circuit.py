@@ -17,7 +17,7 @@ def rot_circuit_to_sb(L,circ):
 def _find_sb_gate(target):
     #start with a random matrix, set first row to target.real, second to target.imag
     #run Gram schmidt
-    mat=np.random.random(size=(4,4),dtype=np.float128)
+    mat=np.random.random(size=(4,4))
     mat[0]=target.real
     mat[0]/=np.sqrt(mat[0]@mat[0])
     mat[1]=target.imag
@@ -100,7 +100,7 @@ def corr_to_circuit(corr,nbcutoff=1e-10):
         gaussian state with correlation matrix corr using a modified version of
         the algorithm described by Fishman and White Phys. Rev. B 92, 075132.
     '''
-    ccorr=np.copy(corr,dtype=np.float128)
+    ccorr=np.copy(corr)
     # ccorr=corr+0.5*np.eye(corr.shape[0])
     L=ccorr.shape[0]//2
     vs=[]
@@ -116,8 +116,9 @@ def corr_to_circuit(corr,nbcutoff=1e-10):
             try:
                 ev,evv=la.eigh(sub)#Turns out that full diagonalization is in practice faster 
             except la.LinAlgError:
+                import warnings
                 warnings.warn("evr method did not converge, falling back to ev")
-                ev.evv=la.eigh(sub,driver="ev")
+                ev,evv=la.eigh(sub,driver="ev")
 
             # else:
             #     ev,evv=la.eigh(sub)
