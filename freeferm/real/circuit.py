@@ -128,7 +128,7 @@ def corr_to_circuit(corr,nbcutoff=1e-10,prec=None):
         gaussian state with correlation matrix corr using a modified version of
         the algorithm described by Fishman and White Phys. Rev. B 92, 075132.
     '''
-    if (nbcutoff<1e-12 or prec is not None) and prec!=0:
+    if (nbcutoff>=1e-12 or prec is not None) and prec!=0:
         return _corr_to_circuit(corr,nbcutoff)
     elif prec is None:
         return _flamp_corr_to_circuit(corr,nbcutoff,prec=-int(np.log2(nbcutoff))*2)
