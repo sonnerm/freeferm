@@ -32,31 +32,6 @@ def _find_sb_gate(target):
         mat[2]=mat[3]
         mat[3]=h
     return mat
-def _mp_find_sb_gate(target,mp):
-    #start with a random matrix, set first row to target.real, second to target.imag
-    #run Gram schmidt
-    mat=mp.randmatrix(4,4)
-    mat=np.array(mat.tolist())
-    mat[0,0]=target[0].real
-    mat[0,1]=target[1].real
-    mat[0,2]=target[2].real
-    mat[0,3]=target[3].real
-    mat[0]/=mp.sqrt(mat[0]@mat[0])
-    mat[1,0]=target[0].imag
-    mat[1,1]=target[1].imag
-    mat[1,2]=target[2].imag
-    mat[1,3]=target[3].imag
-    mat[1]-=(mat[0]@mat[1])*mat[0]
-    mat[1]/=mp.sqrt(mat[1]@mat[1])
-    mat[2]-=(mat[0]@mat[2])*mat[0]+(mat[1]@mat[2])*mat[1]
-    mat[2]/=mp.sqrt(mat[2]@mat[2])
-    mat[3]-=(mat[0]@mat[3])*mat[0]+(mat[1]@mat[3])*mat[1]+(mat[2]@mat[3])*mat[2]
-    mat[3]/=mp.sqrt(mat[3]@mat[3])
-    if mp.det(mp.matrix(mat))<0:
-        h=mat[2,:].copy()
-        mat[2,:]=mat[3,:]
-        mat[3,:]=h
-    return mp.matrix(mat)
 
 def _flamp_find_sb_gate(target):
     #start with a random matrix, set first row to target.real, second to target.imag
@@ -80,26 +55,22 @@ def _flamp_find_sb_gate(target):
         mat[2]=mat[3]
         mat[3]=h
     return mat
-def _mp_to_np(mat):
-    return np.array([[np.float64(x) for x in y] for y in mat.tolist()])
-def mp_corr_to_circuit(corr,nbcutoff=1e-10,prec=200):
-    '''
-        Find a quantum circuit which transforms the vacuum state into the
-        gaussian state with correlation matrix corr using a modified version of
-        the algorithm described by Fishman and White Phys. Rev. B 92, 075132.
-    '''
-    import mpmath as mp
-    with mp.workprec(prec):
-        nbcutoff=mp.mpf(nbcutoff)
-        ccorr=mp.matrix(corr)
+def _flamp_corr_to_circuit(corr,nbcutoff=1e-10,prec=200):
+    import flamp
+    import gmpy2
+    oldprec=flamp.get_precision()
+    try:
+        flamp.set_precision(prec)
+        nbcutoff=gmpy2.mpfr(nbcutoff)
+        ccorr=flamp.to_mp(corr)
         # ccorr=corr+0.5*np.eye(corr.shape[0])
         L=corr.shape[0]//2
         vs=[]
         for l in range(0,2*L,2):
             for b in range(2,2*L-l+1,2):
                 sub=ccorr[l:b+l,l:b+l]
-                ev,evv=mp.eigh(sub)
-                if max(ev)>mp.mpf(0.5)-nbcutoff:
+                ev,evv=flamp.eigh(sub)
+                if max(ev)>gmpy2.mpfr(0.5)-nbcutoff:
                     target=evv[:,b-1]
                     break
                 if b==2*L-l:
@@ -107,57 +78,19 @@ def mp_corr_to_circuit(corr,nbcutoff=1e-10,prec=200):
                     import warnings
                     warnings.warn("nbcutoff not reached %s"%str(0.5-max(ev)))
             for i in range(b-4,-1,-2):
-                vs.append(((i+l)//2,_mp_find_sb_gate(target[i:i+4],mp)))
+                vs.append(((i+l)//2,_flamp_find_sb_gate(target[i:i+4])))
                 _apply_rot_to_vec(target,i,vs[-1][1])
                 _apply_rot_to_corr(ccorr,(i+l)//2,vs[-1][1])
         if ccorr[2*L-2,2*L-1].imag>0:
             for k,(i,r) in list(enumerate(vs))[::-1]:
                 if i==L-2:
-                    vs[k]=(i,mp.diag([1,1,1,-1])@r)
+                    vs[k]=(i,flamp.to_mp(np.diag([1,1,1,-1]))@r)
                     break
-        return [(v[0],rot_sb_to_dense(_mp_to_np(v[1])).T.conj(),True if mp.det(v[1])<0 else False,_mp_to_np(v[1].T)) for v in vs[::-1]]
-def flamp_corr_to_circuit(corr,nbcutoff=1e-10,prec=200):
-    '''
-        Find a quantum circuit which transforms the vacuum state into the
-        gaussian state with correlation matrix corr using a modified version of
-        the algorithm described by Fishman and White Phys. Rev. B 92, 075132.
-    '''
-    import flamp
-    import gmpy2
-    flamp.set_precision(prec)
-    nbcutoff=gmpy2.mpfr(nbcutoff)
-    ccorr=flamp.to_mp(corr)
-    # ccorr=corr+0.5*np.eye(corr.shape[0])
-    L=corr.shape[0]//2
-    vs=[]
-    for l in range(0,2*L,2):
-        for b in range(2,2*L-l+1,2):
-            sub=ccorr[l:b+l,l:b+l]
-            ev,evv=flamp.eigh(sub)
-            if max(ev)>gmpy2.mpfr(0.5)-nbcutoff:
-                target=evv[:,b-1]
-                break
-            if b==2*L-l:
-                target=evv[:,b-1]
-                import warnings
-                warnings.warn("nbcutoff not reached %s"%str(0.5-max(ev)))
-        for i in range(b-4,-1,-2):
-            vs.append(((i+l)//2,_flamp_find_sb_gate(target[i:i+4])))
-            _apply_rot_to_vec(target,i,vs[-1][1])
-            _apply_rot_to_corr(ccorr,(i+l)//2,vs[-1][1])
-    if ccorr[2*L-2,2*L-1].imag>0:
-        for k,(i,r) in list(enumerate(vs))[::-1]:
-            if i==L-2:
-                vs[k]=(i,flamp.to_mp(np.diag([1,1,1,-1]))@r)
-                break
-    return [(v[0],rot_sb_to_dense(np.array(v[1],dtype=np.float64)).T.conj(),True if flamp.det(v[1])<0 else False,np.array(v[1].T,dtype=np.float64)) for v in vs[::-1]]
+        return [(v[0],rot_sb_to_dense(np.array(v[1],dtype=np.float64)).T.conj(),True if flamp.det(v[1])<0 else False,np.array(v[1].T,dtype=np.float64)) for v in vs[::-1]]
+    finally:
+        flamp.set_precision(oldprec)
     
-def corr_to_circuit(corr,nbcutoff=1e-10):
-    '''
-        Find a quantum circuit which transforms the vacuum state into the
-        gaussian state with correlation matrix corr using a modified version of
-        the algorithm described by Fishman and White Phys. Rev. B 92, 075132.
-    '''
+def _corr_to_circuit(corr,nbcutoff=1e-10):
     ccorr=np.copy(corr)
     # ccorr=corr+0.5*np.eye(corr.shape[0])
     L=ccorr.shape[0]//2
@@ -165,22 +98,12 @@ def corr_to_circuit(corr,nbcutoff=1e-10):
     for l in range(0,2*L,2):
         for b in range(2,2*L-l+1,2):
             sub=ccorr[l:b+l,l:b+l]
-            # if sub.shape[0]>10:
-            #     try:
-            #         ev,evv=spla.eigsh(sub,k=1,which="LA")
-            #     except spla.ArpackNoConvergence:
-            #         import warnings
-            #         warnings.warn("Lanczos did not converge, falling back")
             try:
                 ev,evv=la.eigh(sub)#Turns out that full diagonalization is in practice faster 
             except la.LinAlgError:
                 import warnings
                 warnings.warn("evr method did not converge, falling back to ev")
                 ev,evv=la.eigh(sub,driver="ev")
-
-            # else:
-            #     ev,evv=la.eigh(sub)
-            # ev,evv=la.eigh(sub)
             if max(ev)>0.5-nbcutoff:
                 target=evv[:,-1]
                 break
@@ -199,6 +122,18 @@ def corr_to_circuit(corr,nbcutoff=1e-10):
                 vs[k]=(i,np.diag([1,1,1,-1])@r)
                 break
     return [(v[0],rot_sb_to_dense(v[1]).T.conj(),True if la.det(v[1])<0 else False,v[1].T) for v in vs[::-1]]
+def corr_to_circuit(corr,nbcutoff=1e-10,prec=None):
+    '''
+        Find a quantum circuit which transforms the vacuum state into the
+        gaussian state with correlation matrix corr using a modified version of
+        the algorithm described by Fishman and White Phys. Rev. B 92, 075132.
+    '''
+    if (nbcutoff<1e-12 or prec is not None) and prec!=0:
+        return _corr_to_circuit(corr,nbcutoff)
+    elif prec is None:
+        return _flamp_corr_to_circuit(corr,nbcutoff,prec=-int(np.log2(nbcutoff))*2)
+    else:
+        return _flamp_corr_to_circuit(corr,nbcutoff,prec)
 
 def _apply_rot_to_corr(corr,pos,rot):
     corr[:2*pos,2*pos:2*pos+4]=corr[:2*pos,2*pos:2*pos+4]@rot.T
