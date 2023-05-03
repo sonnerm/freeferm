@@ -20,7 +20,8 @@ def _find_sb_gate(target):
     mat=np.random.random(size=(4,4))
     mat[0]=target.real
     mat[0]/=np.sqrt(mat[0]@mat[0])
-    mat[1]=target.imag
+    if not np.allclose(target.imag,(mat[0]@target.imag)*mat[0]):
+        mat[1]=target.imag
     mat[1]-=(mat[0]@mat[1])*mat[0]
     mat[1]/=np.sqrt(mat[1]@mat[1])
     mat[2]-=(mat[0]@mat[2])*mat[0]+(mat[1]@mat[2])*mat[1]
