@@ -15,12 +15,25 @@ def rot_sb_to_dense(rot):
     check_dense_lmax(L)
     pm=np.eye(2**L)
     if la.det(rot)<0:
-        rot=rot@np.diag([-1]+[1]*(2*L-1))
+        arot=rot@np.diag([-1]+[1]*(2*L-1))
         pm=kron([SX]+[ID]*(L-1))
-    ev,evv=eigu(rot)
+    if np.trace(rot)<0:
+        arot=-rot
+        pm=pm@kron([SZ]*L)
+    else:
+        arot=rot
+    ev,evv=eigu(arot)
     eva=np.angle(ev) #equivalent to matrix logarithm for unit values
     evm,evvm=la.eigh(quad_sb_to_dense(np.einsum("ab,b,cb->ac",evv,eva,evv.conj())))
-    return np.einsum("ab,b,cb->ac",evvm,np.exp(0.5j*evm),evvm.conj())@pm
+    ret=np.einsum("ab,b,cb->ac",evvm,np.exp(0.5j*evm),evvm.conj())@pm
+    return ret
+    rret=rot_dense_to_sb(ret@pm)
+    # if np.allclose(rret,rot): #This fixes the ambiguity issue for L=2
+    #     return ret
+    # elif np.allclose(rret,-rot):
+    #     return ret@kron([SZ]*L)
+    # else:
+    #     raise la.LinAlgError("Rotation did not work",rret,rot,rret-rot)
 
 
 def rot_sb_to_sparse(rot):
