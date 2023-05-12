@@ -11,17 +11,19 @@ def rot_dense_to_sb(rot):
             ret[i,j]=np.trace(dense_ma(L,j)@rot.T.conj()@dense_ma(L,i)@rot).real/2**(L-1)
     return ret
 def rot_sb_to_dense(rot):
+    #To do properly: 
+    #a) sort the eigenvalues in complex conjugate pairs
+    #b) check if 
     L=rot.shape[0]//2
     check_dense_lmax(L)
     pm=np.eye(2**L)
-    if la.det(rot)<0:
+    arot=rot
+    if la.det(arot)<0:
         arot=rot@np.diag([-1]+[1]*(2*L-1))
         pm=kron([SX]+[ID]*(L-1))
-    if np.trace(rot)<0:
-        arot=-rot
+    if np.trace(arot)<0:
+        arot=-arot
         pm=pm@kron([SZ]*L)
-    else:
-        arot=rot
     ev,evv=eigu(arot)
     eva=np.angle(ev) #equivalent to matrix logarithm for unit values
     evm,evvm=la.eigh(quad_sb_to_dense(np.einsum("ab,b,cb->ac",evv,eva,evv.conj())))
