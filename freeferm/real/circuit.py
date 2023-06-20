@@ -129,12 +129,20 @@ def corr_to_circuit(corr,nbcutoff=1e-10,prec=None):
         gaussian state with correlation matrix corr using a modified version of
         the algorithm described by Fishman and White Phys. Rev. B 92, 075132.
     '''
-    if (nbcutoff>=1e-12 or prec is not None) and prec!=0:
-        return _corr_to_circuit(corr,nbcutoff)
-    elif prec is None:
-        return _flamp_corr_to_circuit(corr,nbcutoff,prec=-int(np.log2(nbcutoff))*2)
-    else:
-        return _flamp_corr_to_circuit(corr,nbcutoff,prec)
+    def corr_vac(L):
+        return np.diag(([-0.5j,0]*L)[:-1],1)+np.diag(([0.5j,0]*L)[:-1],-1)
+    for _ in range(10):
+        if (nbcutoff>=1e-12 or prec is not None) and prec!=0:
+            circ=_corr_to_circuit(corr,nbcutoff)
+        elif prec is None:
+            circ=_flamp_corr_to_circuit(corr,nbcutoff,prec=-int(np.log2(nbcutoff))*2)
+        else:
+            circ=_flamp_corr_to_circuit(corr,nbcutoff,prec)
+        if np.allclose(apply_circuit_to_corr(corr_vac(corr.shape[0]//2),circ),corr):
+            return circ
+        else:
+            import warnings
+            warnings.warn("FW did not work, trying again")
 
 def _apply_rot_to_corr(corr,pos,rot):
     corr[:2*pos,2*pos:2*pos+4]=corr[:2*pos,2*pos:2*pos+4]@rot.T
